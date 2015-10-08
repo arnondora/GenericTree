@@ -1,5 +1,5 @@
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LinkedTree<E> extends ATree<E>
 {
@@ -9,120 +9,123 @@ public class LinkedTree<E> extends ATree<E>
 		private Node<E> parent;
 		private List<Node<E>> children;
 		
-		public Node(E e,Node<E> parent, List<Node<E>> children)
+		public Node (E e, Node<E> p, List<Node<E>> c)
 		{
 			element = e;
-			this.parent = parent;
-			this.children = children;
+			parent = p;
+			children = c;
 		}
 		
-		//Getter
-		public E getElement () { return element; }
+		public E getElement (){ return element;}
 		public Node<E> getParent () {return parent;}
-		public List<Node<E>> getChildren(){return children;}
+		public List<Node<E>> getChildren () {return children;}
 		
-		//Setter
-		public void setElement (E element) {this.element = element;}
-		public void setParent (Node<E> parent) {this.parent = parent;}
-		public void setChildren (List<Node<E>> setParent) {this.children = setParent;}
+		public void setElement (E e) {element = e;}
+		public void setParent (Node<E> p) {parent = p;}
+		public void setChildren(List<Node<E>> c){children = c;}
 	}
 	
 	protected Node<E> root = null;
-	private int size = 0;
+	protected int size = 0;
 	
-	public Node<E> newNode (E e, Node<E> p, List<Node<E>> child) {return new Node<E> (e,p,child);}
-	
-	protected Node<E> validate (IPosition<E> p) throws Exception
+	private Node<E> newNode (E e, Node<E> p, List<Node<E>> c)
 	{
-		Node<E> node = null;
-		try
-		{
-			node = (Node<E>) p;
-			if (node.getParent() == node) throw new Exception("the position is no longer in the tree");
-		}
-		catch (Exception e){throw new Exception ("invalid position type.");}
-		return node;
+		return new Node<E>(e,p,c);
 	}
 	
-	public IPosition<E> root() {return root;}
-	
-	public IPosition<E> parent(IPosition<E> p) {
+	private Node<E> validate (IPosition<E> p) throws Exception
+	{
 		Node<E> testNode = null;
-		
 		try
 		{
-			testNode = validate(p);
+			testNode = ((Node<E>)p);
+			if (testNode.getParent() == testNode) throw new Exception("invalid position type");
 		}
 		catch (Exception e)
 		{
-			System.out.println("ERROR Parent: " + e.getMessage());
+			throw new Exception ("invalid position type");
 		}
 		
 		return testNode;
 	}
 
-	public int size() {
-		return size;
-	}
+	public IPosition<E> root() { return root;}
 
-	public Iterable<IPosition<E>> children(IPosition<E> p) 
-	{
-		ArrayList<IPosition<E>> exportChild = new ArrayList<>();
-		Node<E> chkNode = null;
+	public IPosition<E> parent(IPosition<E> p) {
+		Node<E> pNode = null;
 		try
 		{
-			chkNode = validate(p);
-			exportChild.addAll(chkNode.getChildren());
+			pNode = validate(p);
 		}
 		catch (Exception e)
 		{
-			System.out.println("ERROR Children :" + e.getMessage());
+			System.out.println("ERROR root: " + e.getMessage());
+		}
+		return pNode.getParent();
+	}
+
+	public Iterable<IPosition<E>> children(IPosition<E> p) {
+		Node<E> pNode = null;
+		List<IPosition<E>> child = new ArrayList<IPosition<E>>();
+		
+		try
+		{
+			pNode = validate(p);
+			child.addAll(pNode.getChildren());
+		}
+			
+		catch (Exception e)
+		{
+			System.out.println("ERROR children: " + e.getMessage());
 		}
 		
-		//it's ok that exportChild = null <- this node isn't in the tree or doesn't have any child
+		return child;
+	}
 
-		return exportChild;
+	public int size()
+	{
+		return size;
 	}
 	
-	public IPosition<E> addRoot(E e)
+	public IPosition<E> addRoot (E e)
 	{
 		if (root == null)
 		{
-			//ready to add
-			root = new Node<E>(e,null,new ArrayList<Node<E>>());
+			//ready to add root
+			root = newNode(e,null,new ArrayList<Node<E>>());
 			size++;
 		}
 		else
 		{
-			//already added root node call error message
-			System.out.println("Error addRoot: the tree is not empty");
+			System.out.println("ERROR addRoot: the tree is not empty");
 			return null;
 		}
 		
 		return root;
 	}
-
 	
-	public IPosition<E> addChild(IPosition<E> p , E e)
+	public IPosition<E> addChild (IPosition<E> p, E e)
 	{
-		Node<E> pNode = null;
-		Node<E> newNode = null;
+		Node<E> newNode = null ,pNode = null;
 		
 		try
 		{
-			pNode =  validate(p);
+			pNode = validate(p);
 			newNode = newNode(e,pNode,new ArrayList<Node<E>>());
 			pNode.getChildren().add(newNode);
-			size++;			
+			size++;
 		}
-		catch (Exception err) {System.out.println("ERROR addChild: " + err.getMessage());}
+		catch (Exception err)
+		{
+			System.out.println("ERROR addChild: " + err.getMessage());
+		}
+		
 		return newNode;
 	}
 	
 	public E set (IPosition<E> p, E e)
 	{
 		Node<E> setNode = null;
-		
 		try
 		{
 			setNode = validate(p);
@@ -132,52 +135,32 @@ public class LinkedTree<E> extends ATree<E>
 		{
 			System.out.println("ERROR set: " + err.getMessage());
 		}
-		
 		return e;
 	}
 	
 	public E remove (IPosition<E> p)
 	{
-		Node<E> removeNode = null;
-		E eVal = null;
-		
-		try
-		{
-			removeNode = validate(p);
-			eVal = removeNode.getElement();
-			
-			//check whether this node is root or not
-			if (removeNode.getParent() == null)
-				root = null;
-			else
-				//otherwise remove link form parent via ArrayList.remove()
-				removeNode.getChildren().remove(removeNode);
-			size -= 1 + postOrderSubTree(p,new ArrayList<IPosition<E>>()).size();
-		}
-		catch (Exception e)
-		{
-			System.out.println("ERROR remove: " + e.getMessage());
-		}
-		
-		return eVal;
+		E tempVal = p.getElement();
+		((Node<E>)p).getChildren().remove(p);
+		size -= 1+ ((List<IPosition<E>>)preOrder()).size();
+		return tempVal;
 	}
 	
 	public void swap (IPosition<E> p, IPosition<E> q)
 	{
-		Node<E> NodeA = null, NodeB = null;
-		
+		Node<E> nodeA = null, nodeB = null;
 		try
 		{
-			NodeA = validate(p);
-			NodeB = validate(q);
-			
-			E temp = NodeA.getElement();
-			NodeA.setElement(NodeB.getElement());
-			NodeB.setElement(temp);
+			nodeA = validate(p);
+			nodeB = validate(q);
 		}
 		catch (Exception e)
 		{
-			System.out.println("ERROR swap: " + e.getMessage());
+			System.out.println("ERROR swap: "+ e.getMessage());
 		}
+		
+		E temp = nodeA.getElement();
+		nodeA.setElement(nodeB.getElement());
+		nodeB.setElement(temp);
 	}
 }

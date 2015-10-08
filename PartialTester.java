@@ -22,7 +22,7 @@ public class PartialTester {
 		System.out.println(tree.numChildren(q));
 		System.out.println(tree.numChildren(s)); next();
 		
-		//STEP 4
+//		//STEP 4
 		tree.set(p,"$$"); print();
 		tree.set(s,"!!"); next();
 	}
